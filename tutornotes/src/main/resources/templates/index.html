@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>TutorNotes AI</title>
+    <style>
+        :root {
+            --ink: #1a1a2e; --ink-soft: #4a4a6a; --ink-muted: #8888aa;
+            --bg: #f7f6f2; --surface: #ffffff; --surface2: #f0eff9;
+            --accent: #5b4fcf; --accent-light: #ede9ff; --accent-dark: #3d34a5;
+            --success: #1d8a5e; --success-bg: #e8f7f1;
+            --danger: #b91c1c; --danger-bg: #fef2f2;
+            --border: #e2e0f0; --radius: 10px; --radius-lg: 16px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.6; }
+
+        header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 10; }
+        .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; color: var(--accent); }
+        .logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; }
+        .badge { background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+        nav a { color: var(--ink-soft); text-decoration: none; font-size: 14px; margin-left: 20px; }
+        nav a:hover { color: var(--accent); }
+
+        main { max-width: 860px; margin: 0 auto; padding: 36px 24px 80px; }
+        .page-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+        .page-sub { color: var(--ink-muted); font-size: 14px; margin-bottom: 28px; }
+
+        .type-toggle { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; gap: 4px; margin-bottom: 28px; width: fit-content; }
+        .type-btn { padding: 8px 20px; border: none; border-radius: 7px; background: transparent; color: var(--ink-soft); font-size: 14px; font-weight: 500; cursor: pointer; transition: all .15s; }
+        .type-btn.active { background: var(--accent); color: white; }
+
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 20px; }
+        .card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+        .form-grid.two { grid-template-columns: 1fr 1fr; }
+        .form-grid.one { grid-template-columns: 1fr; }
+        .field { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 13px; font-weight: 500; color: var(--ink-soft); }
+        select, input, textarea { border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 12px; font-size: 14px; font-family: inherit; color: var(--ink); background: var(--bg); transition: border-color .15s, box-shadow .15s; outline: none; width: 100%; }
+        select:focus, input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,79,207,0.1); background: white; }
+        textarea { resize: vertical; min-height: 90px; }
+        .hint { font-size: 12px; color: var(--ink-muted); margin-top: 3px; }
+
+        .standard-preview { background: var(--accent-light); border: 1px solid rgba(91,79,207,0.2); border-radius: var(--radius); padding: 10px 14px; margin-top: 12px; font-size: 13px; color: var(--accent-dark); display: none; }
+        .standard-preview.show { display: block; }
+
+        .btn-generate { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer; transition: all .15s; }
+        .btn-generate:hover { background: var(--accent-dark); transform: translateY(-1px); }
+
+        .alert { padding: 14px 18px; border-radius: var(--radius); margin-bottom: 20px; font-size: 14px; }
+        .alert-success { background: var(--success-bg); border: 1px solid #c0e8d8; color: var(--success); }
+        .alert-error { background: var(--danger-bg); border: 1px solid #fecaca; color: var(--danger); }
+
+        .note-output { background: var(--surface); border: 1px solid #c0e8d8; border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 28px; }
+        .note-output-header { background: var(--success-bg); border-bottom: 1px solid #c0e8d8; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .note-output-label { font-size: 13px; font-weight: 600; color: var(--success); }
+        .btn-copy { padding: 6px 14px; background: white; border: 1px solid #c0e8d8; border-radius: 7px; font-size: 13px; font-weight: 500; color: var(--success); cursor: pointer; }
+        .btn-copy:hover { background: var(--success-bg); }
+        .note-output-body { padding: 20px 24px; font-size: 14px; line-height: 1.9; }
+
+        .recent-section { margin-top: 36px; }
+        .section-title { font-size: 16px; font-weight: 600; margin-bottom: 14px; color: var(--ink); }
+        .note-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+        .note-card-meta { font-size: 12px; color: var(--ink-muted); margin-bottom: 4px; }
+        .note-card-name { font-size: 14px; font-weight: 500; }
+        .note-card-preview { font-size: 13px; color: var(--ink-soft); margin-top: 4px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .note-card-link { font-size: 13px; color: var(--accent); text-decoration: none; white-space: nowrap; }
+        .note-type-tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; margin-right: 6px; }
+        .tag-student { background: var(--accent-light); color: var(--accent); }
+        .tag-group { background: #e8f7f1; color: var(--success); }
+
+        .field-error { font-size: 12px; color: var(--danger); margin-top: 3px; }
+        input.error, select.error, textarea.error { border-color: #fca5a5; }
+
+        @media (max-width: 600px) {
+            .form-grid, .form-grid.two { grid-template-columns: 1fr; }
+            main { padding: 20px 16px 60px; }
+            header { padding: 0 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        <div class="logo-icon">✏️</div>
+        TutorNotes AI
+    </div>
+    <nav>
+        <a href="/">New Note</a>
+        <a href="/history">History</a>
+    </nav>
+    <span class="badge">Powered by Groq</span>
+</header>
+
+<main>
+    <div class="page-title">Session Note Generator</div>
+    <div class="page-sub">Fill in session details — AI writes the note in seconds.</div>
+
+    <!-- Success output (after redirect) -->
+    <div th:if="${successNote}" class="note-output">
+        <div class="note-output-header">
+            <span class="note-output-label">✅ Session note ready — saved to history</span>
+            <button class="btn-copy" onclick="copyNote()">📋 Copy</button>
+        </div>
+        <div class="note-output-body" id="generated-note" th:text="${successNote}"></div>
+    </div>
+
+    <!-- Error -->
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <!-- Form -->
+    <form th:action="@{/generate}" th:object="${noteRequest}" method="post">
+
+        <!-- Note type toggle -->
+        <div class="type-toggle">
+            <button type="button" class="type-btn active" id="btn-student" onclick="setMode('STUDENT')">👤 Student Note</button>
+            <button type="button" class="type-btn" id="btn-group" onclick="setMode('GROUP')">👥 Group Session Note</button>
+        </div>
+        <input type="hidden" id="noteType" th:field="*{noteType}" value="STUDENT"/>
+
+        <!-- Standards -->
+        <div class="card">
+            <div class="card-title">📚 Standards</div>
+            <div class="form-grid">
+                <div class="field">
+                    <label>State</label>
+                    <select id="stateSelect" th:field="*{state}" onchange="loadGrades()">
+                        <option value="">Select state…</option>
+                        <option th:each="s : ${states}" th:value="${s}" th:text="${s}"></option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Grade</label>
+                    <select id="gradeSelect" th:field="*{grade}" onchange="loadTopics()" disabled>
+                        <option value="">Select grade…</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Math Standard / Topic</label>
+                    <select id="topicSelect" th:field="*{topic}" onchange="showStandardPreview()" disabled>
+                        <option value="">Select topic…</option>
+                    </select>
+                </div>
+            </div>
+            <div class="standard-preview" id="standard-preview"></div>
+        </div>
+
+        <!-- Student details -->
+        <div class="card">
+            <div class="card-title" id="details-label">👤 Student Details</div>
+            <div class="form-grid two">
+                <div class="field">
+                    <label id="name-label">Student Name</label>
+                    <input type="text" th:field="*{studentNames}"
+                           th:classappend="${#fields.hasErrors('studentNames')} ? 'error'"
+                           placeholder="e.g. Marcus"/>
+                    <span th:if="${#fields.hasErrors('studentNames')}" class="field-error"
+                          th:errors="*{studentNames}"></span>
+                </div>
+                <div class="field">
+                    <label>Session Date</label>
+                    <input type="date" th:field="*{sessionDate}"
+                           th:classappend="${#fields.hasErrors('sessionDate')} ? 'error'"/>
+                    <span th:if="${#fields.hasErrors('sessionDate')}" class="field-error"
+                          th:errors="*{sessionDate}"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Observations -->
+        <div class="card">
+            <div class="card-title">📝 Session Observations</div>
+            <div class="form-grid one">
+                <div class="field">
+                    <label>Engagement &amp; Behaviour</label>
+                    <textarea th:field="*{engagement}"
+                              th:classappend="${#fields.hasErrors('engagement')} ? 'error'"
+                              placeholder="How did the student(s) show up? Focus, attitude, disruptions, notable moments…"></textarea>
+                    <span th:if="${#fields.hasErrors('engagement')}" class="field-error"
+                          th:errors="*{engagement}"></span>
+                    <div class="hint">e.g. "Students were focused but rushed the exit ticket because of Blooket"</div>
+                </div>
+                <div class="field">
+                    <label>Skills &amp; Specific Moments</label>
+                    <textarea th:field="*{skills}"
+                              th:classappend="${#fields.hasErrors('skills')} ? 'error'"
+                              placeholder="What clicked, what didn't — specific problems, mistakes, breakthroughs…"></textarea>
+                    <span th:if="${#fields.hasErrors('skills')}" class="field-error"
+                          th:errors="*{skills}"></span>
+                </div>
+                <div class="field">
+                    <label>Activities &amp; Tools Used <span style="color:var(--ink-muted);font-weight:400">(optional)</span></label>
+                    <input type="text" th:field="*{activities}"
+                           placeholder="e.g. IXL, Blooket, exit ticket, word problems…"/>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-generate">✨ Generate Session Note</button>
+    </form>
+
+    <!-- Recent notes -->
+    <div class="recent-section" th:if="${not #lists.isEmpty(recentNotes)}">
+        <div class="section-title">Recent Notes</div>
+        <div th:each="note : ${recentNotes}" class="note-card">
+            <div style="flex:1;min-width:0">
+                <div class="note-card-meta">
+                    <span th:class="${note.noteType.name() == 'GROUP'} ? 'note-type-tag tag-group' : 'note-type-tag tag-student'"
+                          th:text="${note.noteType.name() == 'GROUP'} ? 'Group' : 'Student'"></span>
+                    <span th:text="${#temporals.format(note.sessionDate, 'MMM d, yyyy')}"></span>
+                    <span th:if="${note.topic}" th:text="' · ' + ${note.topic}"></span>
+                </div>
+                <div class="note-card-name" th:text="${note.studentNames}"></div>
+                <div class="note-card-preview" th:text="${note.generatedNote}"></div>
+            </div>
+            <a th:href="@{/notes/{id}(id=${note.id})}" class="note-card-link">View →</a>
+        </div>
+        <a href="/history" style="font-size:13px;color:var(--accent);text-decoration:none">View all notes →</a>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    // Mode toggle
+    function setMode(mode) {
+        document.getElementById('noteType').value = mode;
+        document.getElementById('btn-student').classList.toggle('active', mode === 'STUDENT');
+        document.getElementById('btn-group').classList.toggle('active', mode === 'GROUP');
+        document.getElementById('details-label').textContent = mode === 'STUDENT' ? '👤 Student Details' : '👥 Group Session Details';
+        document.getElementById('name-label').textContent = mode === 'STUDENT' ? 'Student Name' : 'Student Names';
+        document.querySelector('[name="studentNames"]').placeholder = mode === 'STUDENT' ? 'e.g. Marcus' : 'e.g. Marcus, Sofia, Daniel';
+    }
+
+    // Cascading dropdowns via AJAX
+    async function loadGrades() {
+        const state = document.getElementById('stateSelect').value;
+        const gradeSelect = document.getElementById('gradeSelect');
+        const topicSelect = document.getElementById('topicSelect');
+        gradeSelect.innerHTML = '<option value="">Select grade…</option>';
+        topicSelect.innerHTML = '<option value="">Select topic…</option>';
+        topicSelect.disabled = true;
+        gradeSelect.disabled = !state;
+        document.getElementById('standard-preview').classList.remove('show');
+        if (!state) return;
+
+        const res = await fetch(`/api/grades?state=${state}`);
+        const grades = await res.json();
+        grades.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g; opt.textContent = g;
+            gradeSelect.appendChild(opt);
+        });
+        gradeSelect.disabled = false;
+    }
+
+    async function loadTopics() {
+        const state = document.getElementById('stateSelect').value;
+        const grade = document.getElementById('gradeSelect').value;
+        const topicSelect = document.getElementById('topicSelect');
+        topicSelect.innerHTML = '<option value="">Select topic…</option>';
+        document.getElementById('standard-preview').classList.remove('show');
+        if (!state || !grade) { topicSelect.disabled = true; return; }
+
+        const res = await fetch(`/api/topics?state=${state}&grade=${grade}`);
+        const topics = await res.json();
+        topics.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.topic; opt.textContent = t.topic;
+            opt.dataset.desc = t.description || '';
+            topicSelect.appendChild(opt);
+        });
+        topicSelect.disabled = false;
+    }
+
+    function showStandardPreview() {
+        const sel = document.getElementById('topicSelect');
+        const chosen = sel.options[sel.selectedIndex];
+        const preview = document.getElementById('standard-preview');
+        const state = document.getElementById('stateSelect').value;
+        const grade = document.getElementById('gradeSelect').value;
+        if (chosen && chosen.value) {
+            preview.innerHTML = `<strong>${state} · Grade ${grade} · ${chosen.value}</strong><br>${chosen.dataset.desc || ''}`;
+            preview.classList.add('show');
+        } else {
+            preview.classList.remove('show');
+        }
+    }
+
+    // Copy generated note
+    function copyNote() {
+        const text = document.getElementById('generated-note')?.textContent || '';
+        navigator.clipboard.writeText(text.trim()).then(() => {
+            const btn = document.querySelector('.btn-copy');
+            btn.textContent = '✅ Copied!';
+            setTimeout(() => btn.textContent = '📋 Copy', 2000);
+        });
+    }
+
+    // Set today's date if blank
+    const dateInput = document.querySelector('[name="sessionDate"]');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+</script>
+</body>
+</html>

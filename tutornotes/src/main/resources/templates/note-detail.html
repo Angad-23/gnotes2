@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="'Note — ' + ${note.studentNames} + ' — TutorNotes AI'"></title>
+    <style>
+        :root{--ink:#1a1a2e;--ink-soft:#4a4a6a;--ink-muted:#8888aa;--bg:#f7f6f2;--surface:#ffffff;--accent:#5b4fcf;--accent-light:#ede9ff;--success:#1d8a5e;--success-bg:#e8f7f1;--border:#e2e0f0;--radius:10px;--radius-lg:16px;}
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.6;}
+        header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:10;}
+        .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;color:var(--accent);}
+        .logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;}
+        nav a{color:var(--ink-soft);text-decoration:none;font-size:14px;margin-left:20px;}
+        main{max-width:760px;margin:0 auto;padding:36px 24px 80px;}
+        .back{font-size:13px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-bottom:20px;}
+        .page-title{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:4px;}
+        .meta{font-size:13px;color:var(--ink-muted);margin-bottom:28px;}
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;margin-bottom:20px;}
+        .card-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);margin-bottom:14px;}
+        .note-text{font-size:15px;line-height:1.9;color:var(--ink);}
+        .obs-label{font-size:12px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+        .obs-text{font-size:14px;color:var(--ink-soft);margin-bottom:14px;}
+        .btn-copy{padding:8px 18px;background:var(--success-bg);border:1px solid #c0e8d8;border-radius:7px;color:var(--success);font-size:14px;font-weight:500;cursor:pointer;}
+        .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;}
+        .tag-student{background:var(--accent-light);color:var(--accent);}
+        .tag-group{background:var(--success-bg);color:var(--success);}
+    </style>
+</head>
+<body>
+<header>
+    <div class="logo"><div class="logo-icon">✏️</div> TutorNotes AI</div>
+    <nav><a href="/">New Note</a><a href="/history">History</a></nav>
+</header>
+<main>
+    <a href="/history" class="back">← Back to history</a>
+
+    <div class="page-title" th:text="${note.studentNames}"></div>
+    <div class="meta">
+        <span th:class="${note.noteType.name() == 'GROUP'} ? 'tag tag-group' : 'tag tag-student'"
+              th:text="${note.noteType.name() == 'GROUP'} ? 'Group Session' : 'Student Note'"></span>
+        &nbsp;
+        <span th:text="${#temporals.format(note.sessionDate, 'MMMM d, yyyy')}"></span>
+        <span th:if="${note.topic}" th:text="' · ' + ${note.state} + ' · Grade ' + ${note.grade} + ' · ' + ${note.topic}"></span>
+    </div>
+
+    <!-- Generated note -->
+    <div class="card">
+        <div class="card-title">Generated Session Note</div>
+        <div class="note-text" id="note-text" th:text="${note.generatedNote}"></div>
+        <br/>
+        <button class="btn-copy" onclick="copyNote()">📋 Copy note</button>
+    </div>
+
+    <!-- Observations -->
+    <div class="card">
+        <div class="card-title">Session Observations</div>
+        <div class="obs-label">Engagement &amp; Behaviour</div>
+        <div class="obs-text" th:text="${note.engagement}"></div>
+        <div class="obs-label">Skills &amp; Specific Moments</div>
+        <div class="obs-text" th:text="${note.skills}"></div>
+        <div th:if="${note.activities}">
+            <div class="obs-label">Activities Used</div>
+            <div class="obs-text" th:text="${note.activities}"></div>
+        </div>
+    </div>
+</main>
+<script>
+    function copyNote() {
+        navigator.clipboard.writeText(document.getElementById('note-text').textContent.trim()).then(() => {
+            const btn = document.querySelector('.btn-copy');
+            btn.textContent = '✅ Copied!';
+            setTimeout(() => btn.textContent = '📋 Copy note', 2000);
+        });
+    }
+</script>
+</body>
+</html>
